@@ -1,46 +1,56 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useContext } from "react";
 
 import classes from "./AuthForm.module.css";
+import AuthContext from "../../store/Auth-context";
 
 const AuthForm = () => {
   const enteredEmail = useRef("");
   const enteredPassword = useRef("");
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const AuthCtx = useContext(AuthContext);
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
   };
 
-  const submitHandler = (event) => {
+  const submitHandler = async (event) => {
     event.preventDefault();
 
     const email = enteredEmail.current.value;
     const password = enteredPassword.current.value;
+    setIsLoading(true);
+
+    let url;
 
     if (isLogin) {
+      url =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=9m7T7PICwj7lHrzj9y5ktkgzEstCJo";
     } else {
-      fetch(
-        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBwg9m7T7PICwj7lHrzj9y5ktkgzEstCJo",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email: email,
-            password: password,
-            returnSecureToken: true,
-          }),
-          headers: {
-            "Content-type": "application/json",
-          },
-        }
-      ).then((res) => {
-        if (res.ok) {
-        } else {
-          return res.json().then((data) => {
-            console.log(data.error.message);
-            alert(data.error.message);
-          });
-        }
-      });
+      url =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=9m7T7PICwj7lHrzj9y5ktkgzEstCJo";
+    }
+
+    const res = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        email: email,
+        password: password,
+        returnSecureToken: true,
+      }),
+      headers: {
+        "Content-type": "application/json",
+      },
+    });
+    setIsLoading(false);
+    if (res.ok) {
+      const data = await res.json();
+
+      AuthCtx.login(data.idToken);
+    } else {
+      const error = await res.json();
+      alert(error.error.message);
     }
   };
 
@@ -57,12 +67,10 @@ const AuthForm = () => {
           <input type="password" id="password" required ref={enteredPassword} />
         </div>
         <div className={classes.actions}>
-          {isLogin ? (
-            <button type="submit">Login</button>
-          ) : (
-            <button type="submit">Create Account</button>
+          {!isLoading && (
+            <button>{isLogin ? "Login" : "Create Account"}</button>
           )}
-
+          {isLoading && <p>Loading...</p>}
           <button
             type="button"
             className={classes.toggle}
