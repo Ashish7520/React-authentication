@@ -8,7 +8,9 @@ import AuthContext from "../../store/Auth-context";
 const MainNavigation = () => {
   const AuthCtx = useContext(AuthContext);
   const isLogin = AuthCtx.isLogin;
-  console.log(isLogin);
+  const logoutHandler = () => {
+    AuthCtx.logOut();
+  };
 
   return (
     <header className={classes.header}>
@@ -29,7 +31,7 @@ const MainNavigation = () => {
           )}
           {isLogin && (
             <li>
-              <button>Logout</button>
+              <button onClick={logoutHandler}>Logout</button>
             </li>
           )}
         </ul>
